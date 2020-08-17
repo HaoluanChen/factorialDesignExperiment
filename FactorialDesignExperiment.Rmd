@@ -1,0 +1,75 @@
+---
+title: "PDF report"
+author: "Haoluan Chen"
+date: "12/5/2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library("FrF2")
+library(readxl)
+```
+
+## Description 
+For my experiment, I am interested in human reaction time, I want to see the effect of temperature and the effect of two different devices (device to measure my reaction time) gaming mouse and office mouse to my reaction time. The reason that I am interested in reaction time is because I used to play a lot of games and enjoy watching professional gamers play on stage. The reaction time is important to gamer's performance. The average age of professional gamer is around 17 to 25, because at this age we have the fastest reaction time.
+I am wondering when the professional gamers playing on stage, does the temperature of their environment and the device they are using affect their game performance, in this case their reaction time. From my study, I want to answer two questions. Firstly, will my reaction time be slower with lower temperature environment? secondly, can gaming mouse increase your reaction time (because it has faster register click as advertised) compared to normal mouse. 
+
+## Method
+To test my reaction time, I am using the site from Humanbenchmark (https://www.humanbenchmark.com/tests/reactiontime). This site simply tests reaction time by click to begin then click again when the screen turns green. To investigate, I used factorial design with 2 factors. Which are Indoor/outdoor and Gaming mouse/office mouse. Each of factor has 2 level. The indoor temperature is about 22-degree Celsius and the outdoor temperature is about -1 degree Celsius.
+
+\[
+  Indoor =
+  \begin{cases}
+                                   1 & \text{Indoor} \\
+                                   -1 & \text{Outdoor} 
+  \end{cases}
+\]
+\[
+  Gaming Mouse =
+  \begin{cases}
+                                   1 & \text{Gaming Mouse} \\
+                                   -1 & \text{Office Mouse} 
+  \end{cases}
+\]
+
+For each test I will perform 10 repetitions (total of 40 repetitions). Prior to the measurement session, I will randomize the order of each repetition using r. Here is the result of the randomized order.
+```{r randomize, comment=NA }
+set.seed(1)
+sample(1:40)
+```
+Based on the order above, I generated the $2^2$ design matrix to record my result. Looking at the design matrix, for the first test Indoor = 1 and Gaming Mouse = -1. So, I test my reaction time indoor with an office mouse and recorded in Excel. Then moving on to run2 and so on, until I complete all 40 runs.
+
+## Result
+Table 1 is the design matrix and my result.
+```{r model}
+
+Indoor <- rep(c(1,-1),2)
+Gamingmouse <- c(rep(1,2), rep(-1,2))
+mydat <- data.frame(Indoor, Gamingmouse, "Interaction" = Indoor * Gamingmouse)
+#write.csv(mydat, "mydat.csv")
+table <- read.csv("mydat.csv")
+knitr::kable(table[,2:6], cap = "linear model Model Summary", digits=3)
+```
+
+I plotted an interaction plot to have a visual view of difference in observed mean between each indoor/outdoor with gaming/normal mouse result. As we can see that it looks like when I use office mouse, I have slower reaction, and when I use gaming mouse my reaction was faster. From the graph I noticed that the difference between indoors and outdoors was small about 10ms.
+```{r Result, fig.height=6, fig.width=10}
+interaction.plot(table$Gamingmouse, table$Indoor, table$Y, type = "l", trace.label = "Indoor", xlab = "Gaming mouse", ylab = "reaction time in ms", main = "Interaction plot")
+```
+
+I fitted a linear regression model to estimate the Indoor/Outdoor, Gaming mouse/office mouse effect. Here is my result. From table 2, we can see that the Gaming mouse effect is equal to -10.9 with p-value of 0.001. This means that the effect is significant, using gaming mouse increases my reaction about 10 ms. However, the Indoor factor and the interaction was not significant, since both Indoor and interaction term have a large p-value. 
+We can also see that from table 3, The gaming mouse factor have a 95% confident interval of [-34.6, -9.0], it does not include 0. Which means that the effect is significant. The Indoor factor have a 95% confident interval of [-13.1, 12.5] and the interaction term have a 95% confident interval of [-16.4, 9.2]. Both confident interval for Indoor and the interaction term includes 0. Which means that the effect is not significant.
+
+```{r}
+model <- lm(Y~ Gamingmouse * Indoor, data = table)
+knitr::kable(summary(model)$coef, cap = "linear model Model Summary", digits=3)
+knitr::kable(round(2*confint.lm(model),2), cap = "Confident Interval", digits=3)
+
+```
+
+
+## Conclusions
+From my result, I can conclude that there is an effect between using gaming mouse and office mouse on reaction time. On average, the gaming mouse can increase my reaction time by 10.9ms. But gaming mouse helps to improve my reaction time only in indoor setting. This means that the gaming mouse has a faster register click as advertised and the professional gamers use gaming mouse will improve their reaction time. Thus, improve their gameplay. However, it was shown that the environment temperature does not affect reaction time. This may because I was outdoor for about 1 minute for each test, my body was not cold enough to see a significant decrease in my reaction time.
+
